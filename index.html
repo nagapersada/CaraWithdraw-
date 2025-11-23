@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Panduan Withdraw OPALP</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+
+    <style>
+        /* --- RESET & BASE --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: #000;
+            height: 100dvh; 
+            width: 100vw;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            position: fixed;
+            top: 0; left: 0;
+            overscroll-behavior: none; /* Mencegah pull-to-refresh */
+        }
+
+        /* --- LANDING SCREEN --- */
+        #landing-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #050505;
+            z-index: 999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            transition: opacity 0.5s ease;
+        }
+        .landing-title { color: #fff; font-size: 1.5rem; font-weight: 300; margin-bottom: 0.5rem; letter-spacing: 2px; }
+        .landing-subtitle { color: #888; font-size: 0.9rem; margin-bottom: 2rem; }
+        .btn-enter {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #10b981, #047857);
+            color: white; border: none; border-radius: 50px;
+            font-size: 1rem; font-weight: 600; letter-spacing: 1px;
+            cursor: pointer; box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+            transition: transform 0.2s;
+        }
+        .btn-enter:active { transform: scale(0.95); }
+
+        /* --- APP VIEWER --- */
+        #app-viewer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.5s;
+        }
+        #slide-image {
+            width: 100%; height: 100%;
+            object-fit: contain; object-position: center;
+            display: block;
+        }
+
+        /* --- HEADER FLOATING --- */
+        .header-float {
+            position: absolute; top: 0; left: 0; width: 100%; height: 90px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 100%);
+            z-index: 10; display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 20px 25px; padding-top: max(20px, env(safe-area-inset-top));
+            pointer-events: none;
+        }
+        .app-title { color: rgba(255,255,255,0.9); font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .app-counter { color: #10b981; font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+        /* --- NAV INVISIBLE --- */
+        .nav-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; display: flex; }
+        .nav-zone { width: 50%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <div id="landing-screen">
+        <div style="margin-bottom: 20px;">
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+        </div>
+        <h1 class="landing-title">PANDUAN WITHDRAW</h1>
+        <p class="landing-subtitle">Tekan tombol untuk memulai</p>
+        <button class="btn-enter" onclick="startApp()">BUKA PANDUAN</button>
+    </div>
+
+    <div id="app-viewer">
+        <div class="header-float">
+            <div class="app-title">Withdrawal Guide</div>
+            <div class="app-counter" id="counter">1 / 20</div>
+        </div>
+        <img id="slide-image" src="" alt="Panduan">
+        <div class="nav-layer">
+            <div class="nav-zone" onclick="prevSlide()"></div>
+            <div class="nav-zone" onclick="nextSlide()"></div>
+        </div>
+    </div>
+
+<script>
+    // ============================================
+    // DAFTAR FILE (Termasuk 5,5.png)
+    // ============================================
+    const imageFiles = [
+        "1.png", "2.png", "3.png", "4.png", "5.png",
+        "5,5.png", 
+        "6.png", "7.png", "8.png", "9.png", "10.png",
+        "11.png", "12.png", "13.png", "14.png", "15.png",
+        "16.png", "17.png", "18.png", "19.png"
+    ];
+
+    const totalImages = imageFiles.length;
+    let currentIndex = 0;
+
+    // Refs
+    const landingScreen = document.getElementById('landing-screen');
+    const appViewer = document.getElementById('app-viewer');
+    const imgEl = document.getElementById('slide-image');
+    const counterEl = document.getElementById('counter');
+
+    // --- START & FULLSCREEN & HISTORY TRAP ---
+    function startApp() {
+        // 1. Request Fullscreen
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) { docEl.requestFullscreen(); }
+        else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen(); }
+        
+        // 2. Manipulasi History untuk Trap tombol Back
+        // Kita masukan state palsu agar ketika di-back, dia tidak keluar halaman
+        window.history.pushState({page: 1}, "", "");
+
+        // 3. Masuk Aplikasi
+        landingScreen.style.opacity = '0';
+        setTimeout(() => {
+            landingScreen.style.display = 'none';
+            appViewer.style.opacity = '1';
+            loadFirstImage();
+        }, 500);
+    }
+
+    // --- LOGIKA TOMBOL BACK HP (POPSTATE) ---
+    window.addEventListener('popstate', function(event) {
+        // Ketika tombol Back HP ditekan:
+        
+        // 1. Kembalikan state History agar Trap tetap aktif (Looping trap)
+        window.history.pushState({page: 1}, "", "");
+
+        // 2. Jalankan fungsi Mundur Slide (Prev)
+        // Jadi tombol Back HP berfungsi sebagai tombol "Back Slide"
+        if (currentIndex > 0) {
+            prevSlide(); 
+        } else {
+            // Jika sudah di halaman pertama, biarkan user tau ini awal
+            // (Opsional: Bisa tampilkan alert 'Anda di halaman pertama')
+            if (navigator.vibrate) navigator.vibrate([50, 50]);
+        }
+    });
+
+    // --- Image Logic ---
+    function loadFirstImage() {
+        imgEl.src = imageFiles[currentIndex];
+        const next = new Image(); next.src = imageFiles[currentIndex + 1];
+        updateCounter();
+    }
+
+    function updateView() {
+        imgEl.style.opacity = '0.6';
+        setTimeout(() => {
+            imgEl.src = imageFiles[currentIndex];
+            updateCounter();
+            imgEl.onload = () => { imgEl.style.opacity = '1'; };
+            if(imgEl.complete) imgEl.style.opacity = '1';
+
+            if(currentIndex < totalImages - 1) {
+                const preloadImg = new Image();
+                preloadImg.src = imageFiles[currentIndex + 1];
+            }
+        }, 50);
+    }
+
+    function updateCounter() {
+        counterEl.textContent = `${currentIndex + 1} / ${totalImages}`;
+    }
+
+    // --- Controls ---
+    function nextSlide() {
+        if (currentIndex < totalImages - 1) {
+            currentIndex++;
+            updateView();
+        } else {
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+    }
+
+    function prevSlide() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateView();
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "ArrowRight") nextSlide();
+        if (e.key === "ArrowLeft") prevSlide();
+    });
+
+</script>
+
+</body>
+</html>
